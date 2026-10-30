@@ -37,20 +37,27 @@ button:disabled{opacity:.45}
 .card b{font-size:22px}.card small{font-size:8px}
 .note{font-size:11px;color:#9db9d3;text-align:center;line-height:1.5}
 @media(max-width:560px){#stage{min-height:480px;height:64vh}.side{padding:6px}.zone{min-height:46px;font-size:8px}.lower{grid-template-columns:1fr}}
+
+#modePanel{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+#turnBadge{color:var(--gold);font-weight:800}#oppControls{display:none}#oppControls.visible{display:flex}
+#field.full{min-height:100%;align-content:space-between}#stage:fullscreen{height:100vh;width:100vw;max-width:none;border-radius:0;min-height:100vh}#stage:fullscreen #field{height:100%;align-content:space-between;padding:38px 10px 10px}#stage:fullscreen .side{max-width:650px}
+.zone{cursor:pointer} .zone.selected{outline:2px solid var(--gold);background:#8a642b99}
+@media(max-width:560px){#stage:fullscreen #field{padding:36px 5px 5px;gap:4px}#stage:fullscreen .side{padding:4px}.zone{font-size:7px}}
 </style>
 </head>
 <body>
 <header><h1>YU-GI-OH! · AR DUEL ARENA</h1><p>Campo de duelo interactivo · Prototipo 3D</p></header>
 <main>
 <div class="panel toolbar">
-<button class="primary" id="camBtn">Activar cámara</button>
+<select id="modeSelect" aria-label="Modo de juego"><option value="ai">Contra la IA</option><option value="local">Dos jugadores en el mismo celular</option></select><span id="turnBadge">Turno: Jugador 1</span><button id="turnBtn">Cambiar turno</button><button id="fullBtn">Pantalla completa</button><button class="primary" id="arBtn">Proyectar campo en el piso</button><button id="exitArBtn" disabled>Salir de AR</button><button id="camBtn">Cámara normal</button>
 <select id="monsterSelect" aria-label="Monstruo"><option value="blue">Dragón Blanco de Ojos Azules</option><option value="dark">Mago Oscuro</option><option value="red">Dragón Negro de Ojos Rojos</option><option value="slifer">Slifer el Dragón del Cielo</option><option value="obelisk">Obelisco el Atormentador</option><option value="ra">Dragón Alado de Ra</option><option value="exodia">Exodia</option></select><select id="zoneSelect" aria-label="Zona"><option value="1">Zona 1</option><option value="2">Zona 2</option><option value="3" selected>Zona 3</option><option value="4">Zona 4</option><option value="5">Zona 5</option></select><button class="primary" id="summonBtn">Invocar monstruo</button>
 <button id="attackBtn">Ataque</button>
 <button id="drawBtn">Robar carta</button>
 <button id="resetBtn">Reiniciar duelo</button>
 </div>
+<div class="panel toolbar" id="oppControls"><b>Control del oponente:</b><select id="oppMonsterSelect"><option value="blue">Dragón Blanco de Ojos Azules</option><option value="dark">Mago Oscuro</option><option value="red">Dragón Negro de Ojos Rojos</option><option value="slifer">Slifer el Dragón del Cielo</option><option value="obelisk">Obelisco el Atormentador</option><option value="ra">Dragón Alado de Ra</option><option value="exodia">Exodia</option></select><select id="oppZoneSelect"><option value="1">Zona 1</option><option value="2">Zona 2</option><option value="3" selected>Zona 3</option><option value="4">Zona 4</option><option value="5">Zona 5</option></select><button id="oppSummonBtn">Invocar en campo rival</button><button id="aiMoveBtn">Acción de la IA</button></div>
 <section id="stage">
-<video id="camera" autoplay playsinline muted></video><canvas id="three"></canvas>
+<video id="camera" autoplay playsinline muted></video><canvas id="three"></canvas><div id="arHint" style="position:absolute;z-index:4;bottom:10px;left:10px;right:10px;text-align:center;background:#04101dcc;padding:8px;border-radius:8px;font-size:12px">Pulsa “Proyectar campo en el piso” para iniciar AR espacial compatible.</div>
 <div class="stageLabel" id="status">Campo de duelo listo · Activa la cámara</div>
 <div id="field">
  <div class="side"><h3>OPONENTE</h3><div class="lp"><button onclick="changeLP('opp',-500)">−</button><span id="oppLP">8000</span><button onclick="changeLP('opp',500)">+</button></div>
@@ -69,22 +76,102 @@ button:disabled{opacity:.45}
  <div class="panel"><div class="statline"><b>Tu Deck</b><span>Cartas restantes: <b id="deckCount2">40</b></span></div><div class="deck"><div class="deckbox">遊</div><span class="note">Elige monstruo y zona para invocarlo. Cada zona admite un monstruo.</span></div></div>
  <div class="panel"><b>Mano</b><div id="hand"><span class="note">Tus cartas robadas aparecerán aquí.</span></div></div>
 </div>
-<div class="panel note">Controles de prueba: ajusta los puntos de vida, roba cartas, elige entre siete monstruos y una de tus cinco zonas para invocar; pulsa Ataque. La cámara funciona como fondo; el modelo 3D es una representación geométrica de demostración, todavía sin seguimiento espacial ni reconocimiento de cartas físicas.</div>
+<div class="panel note">AR espacial experimental: requiere navegador compatible con WebXR/ARCore, conexión HTTPS y permisos de cámara. En dispositivos no compatibles puedes seguir usando el modo de cámara normal. Los modelos son figuras geométricas de demostración, no modelos oficiales.</div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script>
-const $=id=>document.getElementById(id);let you=8000,opp=8000,deck=40,hand=0,stream=null,summoned=false,activeMonsters=[];
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const $=id=>document.getElementById(id);
+let you=8000,opp=8000,deck=40,hand=0,stream=null,activeMonsters=[];
+let scene,camera,renderer,fieldGroup,reticle,hitTestSource=null,localSpace=null,viewerSpace=null,arSession=null,fieldPlaced=false,lastHitMatrix=null;
+let currentTurn='you', monsterMeshes=[];
+const monsterNames={blue:'Dragón Blanco de Ojos Azules',dark:'Mago Oscuro',red:'Dragón Negro de Ojos Rojos',slifer:'Slifer el Dragón del Cielo',obelisk:'Obelisco el Atormentador',ra:'Dragón Alado de Ra',exodia:'Exodia'};
+function status(t){$('status').textContent=t;}
 function changeLP(w,n){if(w==='you'){you=Math.max(0,you+n);$('youLP').textContent=you.toLocaleString('es-CR')}else{opp=Math.max(0,opp+n);$('oppLP').textContent=opp.toLocaleString('es-CR')}}
 function updateDeck(){ $('deckCount').textContent=deck;$('deckCount2').textContent=deck}
-$('drawBtn').onclick=()=>{if(deck<=0)return;deck--;hand++;updateDeck();let c=document.createElement('div');c.className='card';c.innerHTML='<b>✦</b><strong>'+(['Dragón Blanco','Mago Oscuro','Kuriboh','Dragón Negro'][Math.floor(Math.random()*4)])+'</strong><small>CARTA ROBADA</small>';$('hand').appendChild(c);$('status').textContent='Robaste una carta.'};
-$('summonBtn').onclick=()=>{let type=$('monsterSelect').value,zone=Number($('zoneSelect').value),z=$('yM'+zone);if(z.classList.contains('occupied')){$('status').textContent='Esa zona ya está ocupada. Elige otra.';return}let names={blue:'Dragón Blanco de Ojos Azules',dark:'Mago Oscuro',red:'Dragón Negro de Ojos Rojos',slifer:'Slifer el Dragón del Cielo',obelisk:'Obelisco el Atormentador',ra:'Dragón Alado de Ra',exodia:'Exodia'};z.classList.add('occupied');z.innerHTML='<span class="mini">✦</span>'+names[type];summoned=true;spawnMonster(type,zone);$('status').textContent='¡'+names[type]+' invocado en la zona '+zone+'!'};
-$('attackBtn').onclick=()=>{if(!summoned){$('status').textContent='Primero invoca un monstruo.';return}changeLP('opp',-3000);$('status').textContent='¡Ráfaga de destrucción! (daño de prueba: 3000 LP)'};
-$('resetBtn').onclick=()=>{you=opp=8000;deck=40;hand=0;summoned=false;activeMonsters.forEach(m=>scene&&scene.remove(m));activeMonsters=[];$('youLP').textContent=$('oppLP').textContent='8000';$('hand').innerHTML='';document.querySelectorAll('#yM1,#yM2,#yM3,#yM4,#yM5').forEach(z=>{z.classList.remove('occupied');z.textContent='Monstruo'});activeMonsters.forEach(m=>scene&&scene.remove(m));activeMonsters=[];updateDeck();$('status').textContent='Duelo reiniciado.'};
-$('camBtn').onclick=async()=>{try{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$('camera').style.display='none';$('camBtn').textContent='Activar cámara';$('status').textContent='Cámara apagada';return}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});$('camera').srcObject=stream;$('camera').style.display='block';$('camBtn').textContent='Apagar cámara';$('status').textContent='Cámara activa · Campo superpuesto'}catch(e){$('status').textContent='No se pudo activar la cámara. Revisa los permisos de Chrome.'}};
-let scene,camera,renderer,dragon;
-function makeMonster(type){let g=new THREE.Group();let palette={blue:[0x9cecff,0x2875b4],dark:[0x6d4acb,0x24134f],red:[0x9b1e1e,0x351018],slifer:[0xd52e32,0x74151d],obelisk:[0x65c9e8,0x174e79],ra:[0xf5c542,0xc46b12],exodia:[0xc7a45a,0x755326]}[type]||[0x9cecff,0x2875b4];let mat=new THREE.MeshStandardMaterial({color:palette[0],metalness:.45,roughness:.3});let dark=new THREE.MeshStandardMaterial({color:palette[1],metalness:.4,roughness:.35});function part(geo,x,y,z,sx,sy,sz,m){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o);return o}part(new THREE.SphereGeometry(1,20,14),0,0,0,.48,.65,.4,mat);part(new THREE.SphereGeometry(1,16,12),0,.67,-.08,.3,.3,.28,mat);for(let side of [-1,1]){part(new THREE.ConeGeometry(.12,.65,8),side*.22,1,-.05,.7,1,.7,dark);part(new THREE.CylinderGeometry(.08,.13,.55,8),side*.55,-.35,0,1,1,1,dark)}if(type==='blue'||type==='red'||type==='slifer'||type==='ra'){for(let side of [-1,1]){let wing=part(new THREE.ConeGeometry(.65,1.2,4),side*.62,.22,.12,1,1,1,dark);wing.rotation.z=side*-1.1}}if(type==='exodia'){for(let side of [-1,1])part(new THREE.BoxGeometry(.18,.8,.2),side*.55,-.05,0,1,1,1,dark)}return g}
-function spawnMonster(type,zone){if(!scene)return;let m=makeMonster(type);let x=(zone-3)*1.25;m.position.set(x,-.3,0);m.scale.setScalar(type==='slifer'||type==='ra'?1.05:.82);scene.add(m);activeMonsters.push(m)}
-function init3D(){let canvas=$('three');scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,canvas.clientWidth/canvas.clientHeight,.1,100);camera.position.set(0,1.2,5.8);camera.lookAt(0,0,0);renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);scene.add(new THREE.HemisphereLight(0xbdeeff,0x12233b,2));let light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(3,5,4);scene.add(light);function animate(){requestAnimationFrame(animate);activeMonsters.forEach(m=>{m.rotation.y+=.004;m.position.y=-.3+Math.sin(Date.now()*.0015)*.045});renderer.render(scene,camera)}animate();new ResizeObserver(()=>{let w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(canvas)}
-if(window.THREE)init3D();else $('status').textContent='Conéctate a internet para cargar el motor 3D.';
+function setTurn(t){currentTurn=t;$('turnBadge').textContent='Turno: '+(t==='you'?'Jugador 1':'Jugador 2');$('oppControls').classList.toggle('visible',$('modeSelect').value==='local'||t==='opp');}
+$('modeSelect').onchange=()=>{setTurn('you');$('oppControls').classList.toggle('visible',$('modeSelect').value==='local');status($('modeSelect').value==='ai'?'Modo contra la IA':'Modo dos jugadores en el mismo celular')};
+$('turnBtn').onclick=()=>setTurn(currentTurn==='you'?'opp':'you');
+$('fullBtn').onclick=()=>{const el=$('stage');if(!document.fullscreenElement)el.requestFullscreen?.();else document.exitFullscreen?.()};
+$('drawBtn').onclick=()=>{if(deck<=0)return;deck--;hand++;updateDeck();let c=document.createElement('div');c.className='card';c.innerHTML='<b>✦</b><strong>'+(['Dragón Blanco','Mago Oscuro','Kuriboh','Dragón Negro'][Math.floor(Math.random()*4)])+'</strong><small>CARTA ROBADA</small>';$('hand').appendChild(c);status('Robaste una carta.')};
+$('summonBtn').onclick=()=>summonFor(currentTurn,$('monsterSelect').value,Number($('zoneSelect').value));
+$('oppSummonBtn').onclick=()=>summonFor('opp',$('oppMonsterSelect').value,Number($('oppZoneSelect').value));
+$('aiMoveBtn').onclick=()=>{if($('modeSelect').value!=='ai'){status('Selecciona el modo Contra la IA para usar esta acción.');return;}const z=[1,2,3,4,5].find(n=>!document.getElementById('oM'+n).classList.contains('occupied'));if(!z){status('La IA no tiene zonas libres.');return;}summonFor('opp',['blue','dark','red','slifer','obelisk','ra','exodia'][Math.floor(Math.random()*7)],z);changeLP('you',-500);status('La IA invocó y realizó un movimiento de prueba.');};
+$('attackBtn').onclick=()=>{if(!activeMonsters.length){status('Primero invoca un monstruo.');return;}changeLP(currentTurn==='you'?'opp':'you',-1000);status('¡Ataque de prueba! Se restaron 1000 LP al rival.')};
+$('resetBtn').onclick=()=>{you=opp=8000;deck=40;hand=0;activeMonsters.forEach(m=>m.parent?.remove(m));activeMonsters=[];document.querySelectorAll('.zone.monster').forEach(z=>{z.classList.remove('occupied');z.classList.remove('selected');z.textContent='Monstruo'});$('youLP').textContent=$('oppLP').textContent='8000';$('hand').innerHTML='';updateDeck();setTurn('you');status('Duelo reiniciado.');};
+$('camBtn').onclick=async()=>{try{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$('camera').style.display='none';$('camBtn').textContent='Cámara normal';status('Cámara normal apagada');return;}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});$('camera').srcObject=stream;$('camera').style.display='block';$('camBtn').textContent='Apagar cámara normal';status('Cámara normal activa. Esto no es seguimiento espacial.');}catch(e){status('No se pudo abrir la cámara normal: '+e.message)}};
+
+function makeMonster(type){
+ const g=new THREE.Group();
+ const palette={blue:[0x9cecff,0x2875b4],dark:[0x6d4acb,0x24134f],red:[0x9b1e1e,0x351018],slifer:[0xd52e32,0x74151d],obelisk:[0x65c9e8,0x174e79],ra:[0xf5c542,0xc46b12],exodia:[0xc7a45a,0x755326]}[type]||[0x9cecff,0x2875b4];
+ const mat=new THREE.MeshStandardMaterial({color:palette[0],metalness:.35,roughness:.38});
+ const dark=new THREE.MeshStandardMaterial({color:palette[1],metalness:.3,roughness:.4});
+ function part(geo,x,y,z,sx,sy,sz,m){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o);return o;}
+ part(new THREE.SphereGeometry(1,20,14),0,.48,0,.36,.48,.3,mat);
+ part(new THREE.SphereGeometry(1,16,12),0,1.02,-.04,.24,.24,.22,mat);
+ for(let side of [-1,1]){part(new THREE.ConeGeometry(.10,.48,8),side*.17,1.34,-.04,.8,1,.8,dark);part(new THREE.CylinderGeometry(.07,.11,.45,8),side*.39,.12,0,1,1,1,dark);}
+ if(['blue','red','slifer','ra'].includes(type)){for(let side of [-1,1]){let w=part(new THREE.ConeGeometry(.55,1,4),side*.48,.58,.05,1,1,1,dark);w.rotation.z=side*-1.05;}}
+ if(type==='exodia'){for(let side of [-1,1])part(new THREE.BoxGeometry(.16,.65,.18),side*.42,.5,0,1,1,1,dark);}
+ const glow=new THREE.PointLight(palette[0],.5,1.5);glow.position.y=1;g.add(glow);
+ return g;
+}
+function makeField(){
+ const group=new THREE.Group();
+ const mat=new THREE.MeshStandardMaterial({color:0x123d5b,metalness:.35,roughness:.5,transparent:true,opacity:.82});
+ const base=new THREE.Mesh(new THREE.BoxGeometry(2.7,.035,1.85),mat);base.position.y=0;group.add(base);
+ const edgeMat=new THREE.MeshBasicMaterial({color:0x55eaff});
+ const line=(x1,z1,x2,z2)=>{const pts=[new THREE.Vector3(x1,.025,z1),new THREE.Vector3(x2,.025,z2)];const geo=new THREE.BufferGeometry().setFromPoints(pts);group.add(new THREE.Line(geo,edgeMat));};
+ for(let x=-1.3;x<=1.31;x+=.54)line(x,-.87,x,.87);
+ for(let z=-.87;z<=.88;z+=.58)line(-1.3,z,1.3,z);
+ const mid=new THREE.Mesh(new THREE.BoxGeometry(2.5,.012,.025),new THREE.MeshBasicMaterial({color:0xffd36b}));mid.position.y=.03;group.add(mid);
+ const addLabel=(txt,x,z)=>{const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='#bdf7ff';ctx.font='bold 28px Arial';ctx.textAlign='center';ctx.fillText(txt,128,42);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));s.position.set(x,.06,z);s.scale.set(.55,.14,1);group.add(s);};
+ addLabel('OPONENTE',0,-.68);addLabel('TU CAMPO',0,.68);
+ return group;
+}
+function init3D(){
+ const canvas=$('three');scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(60,canvas.clientWidth/canvas.clientHeight,.01,100);
+ renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);renderer.xr.enabled=true;
+ scene.add(new THREE.HemisphereLight(0xc9efff,0x17243a,2));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(2,5,3);scene.add(light);
+ fieldGroup=makeField();fieldGroup.visible=false;scene.add(fieldGroup);
+ reticle=new THREE.Mesh(new THREE.RingGeometry(.09,.12,32),new THREE.MeshBasicMaterial({color:0x55ffb0}));reticle.rotation.x=-Math.PI/2;reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
+ renderer.setAnimationLoop((time,frame)=>{if(frame&&hitTestSource&&arSession){const ref=renderer.xr.getReferenceSpace();const results=frame.getHitTestResults(hitTestSource);if(results.length){const pose=results[0].getPose(ref);lastHitMatrix=new THREE.Matrix4().fromArray(pose.transform.matrix);reticle.visible=!fieldPlaced;if(!fieldPlaced)reticle.matrix.copy(lastHitMatrix);}else if(!fieldPlaced)reticle.visible=false;}
+ activeMonsters.forEach(m=>{if(!renderer.xr.isPresenting)m.rotation.y+=.004;});renderer.render(scene,camera);});
+ window.addEventListener('resize',()=>{if(!renderer.xr.isPresenting){const w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);}});
+}
+function placeFieldAt(matrix){fieldGroup.position.setFromMatrixPosition(matrix);fieldGroup.quaternion.setFromRotationMatrix(new THREE.Matrix4().extractRotation(matrix));fieldGroup.visible=true;fieldPlaced=true;reticle.visible=false;status('¡Campo proyectado sobre el piso! Selecciona monstruo y zona para invocar.');}
+$('stage').addEventListener('click',()=>{if(!renderer?.xr.isPresenting||fieldPlaced||!lastHitMatrix)return;placeFieldAt(lastHitMatrix);});
+async function startAR(){
+ if(!navigator.xr){status('Este navegador no expone WebXR. Prueba Chrome actualizado en Android; si no aparece, el dispositivo/navegador no ofrece AR web.');return;}
+ try{
+  const supported=await navigator.xr.isSessionSupported('immersive-ar');if(!supported){status('Este navegador no admite sesiones WebXR de realidad aumentada.');return;}
+  arSession=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});
+  await renderer.xr.setSession(arSession);
+  viewerSpace=await arSession.requestReferenceSpace('viewer');hitTestSource=await arSession.requestHitTestSource({space:viewerSpace});
+  localSpace=await arSession.requestReferenceSpace('local');
+  fieldPlaced=false;lastHitMatrix=null;fieldGroup.visible=false;$('field').style.display='none';$('stageLabel').style.display='none';$('arHint').textContent='Mueve el celular lentamente hacia el piso. Cuando aparezca el círculo verde, toca la pantalla para colocar el campo.';
+  $('arBtn').disabled=true;$('exitArBtn').disabled=false;$('camBtn').disabled=true;
+  arSession.addEventListener('select',()=>{if(!fieldPlaced&&lastHitMatrix)placeFieldAt(lastHitMatrix);});
+  arSession.addEventListener('end',()=>{hitTestSource?.cancel();hitTestSource=null;arSession=null;fieldPlaced=false;lastHitMatrix=null;fieldGroup.visible=false;$('field').style.display='grid';$('stageLabel').style.display='block';$('arBtn').disabled=false;$('exitArBtn').disabled=true;$('camBtn').disabled=false;$('arHint').textContent='Pulsa “Proyectar campo en el piso” para iniciar AR espacial compatible.';status('Sesión AR finalizada.');});
+  status('AR iniciada: busca el suelo y toca para colocar el campo.');
+ }catch(e){status('No se pudo iniciar AR: '+e.message+'. Revisa permisos, HTTPS y compatibilidad WebXR/ARCore.');}
+}
+$('arBtn').onclick=startAR;
+$('exitArBtn').onclick=()=>arSession?.end();
+function summonFor(side,type,zone){
+ const prefix=side==='you'?'yM':'oM',el=$(prefix+zone);
+ if(el.classList.contains('occupied')){status('Esa zona ya está ocupada. Elige otra.');return;}
+ el.classList.add('occupied');el.innerHTML='<span class="mini">✦</span>'+monsterNames[type];
+ const m=makeMonster(type);
+ // Position monsters relative to the anchored duel mat. Five monster zones across each half.
+ const x=(zone-3)*.48,z=side==='you'?.43:-.43;
+ m.position.set(x,.055,z);m.scale.setScalar(type==='slifer'||type==='ra'?.23:.20);
+ fieldGroup.add(m);activeMonsters.push(m);
+ status(monsterNames[type]+' invocado en '+(side==='you'?'tu campo':'el campo rival')+', zona '+zone+'.');
+ if($('modeSelect').value==='ai'&&side==='you')setTurn('opp');
+}
+if($('modeSelect').value==='local')$('oppControls').classList.add('visible');
+setTurn('you');
+init3D();
 </script>
 </body></html>
