@@ -1,194 +1,95 @@
-<!doctype html>
+doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#071326">
-<title>YU-GI-OH! AR SUMMON — Duel Arena</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yu-Gi-Oh! AR Duel Arena</title>
 <style>
-:root{color-scheme:dark;--cyan:#73eaff;--gold:#f5d58a;--panel:#0c1d34;--line:#294b70;--muted:#9bb4ce}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at 50% -15%,#173c67 0,#08172b 42%,#040b16 100%);color:#eff9ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
-header{padding:18px 16px 15px;text-align:center;background:linear-gradient(135deg,#102b4cdd,#071326ee);border-bottom:1px solid #315779;position:relative}
-header:after{content:"";position:absolute;bottom:-1px;left:15%;width:70%;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
-.logo{font-size:clamp(19px,4vw,27px);letter-spacing:3px;font-weight:900;color:#d8faff;text-shadow:0 0 18px #39caff88}
-header p{font-size:10px;letter-spacing:2px;color:#9ebbd5;margin:6px 0 0}
-main{width:min(1050px,100%);margin:auto;padding:14px}
-.section-title{display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:1.7px;color:#a9eaff;margin:20px 2px 11px;font-weight:800}
-.section-title:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,#315779,transparent)}
-.toolbar{display:flex;gap:8px;margin-bottom:10px}
-input{width:100%;min-width:0;background:#08172a;border:1px solid #294b70;border-radius:10px;color:#eff9ff;padding:11px 12px;outline:none}
-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #73eaff22}
-.collection{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.card{position:relative;overflow:hidden;background:linear-gradient(155deg,#173654,#09172a 78%);border:1px solid #315779;border-radius:13px;padding:9px;text-align:left;color:#eff9ff;min-width:0;cursor:pointer;transition:.2s}
-.card:hover{transform:translateY(-2px);border-color:#70dfff}
-.card.selected{border:2px solid var(--cyan);padding:8px;box-shadow:0 0 18px #36cfff44,inset 0 0 18px #36cfff12}
-.art{height:105px;border-radius:8px;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 55%,var(--glow),#07101f 72%);border:1px solid #45627d;position:relative}
-.art:after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,#ffffff18,transparent 45%,#0004);pointer-events:none}
-.art span{font-size:53px;filter:drop-shadow(0 0 12px var(--glow))}
-.card b{display:block;font-size:12px;margin:8px 0 3px;line-height:1.3}
-.card small{font-size:10px;color:#b3c9dc}
-.level{position:absolute;right:8px;top:8px;font-size:9px;color:#ffdf91;letter-spacing:1px}
-.arena{display:grid;grid-template-columns:1fr;gap:12px}
-.stage{position:relative;aspect-ratio:4/5;max-height:590px;background:radial-gradient(ellipse at 50% 70%,#204b77,#07101e 68%);border:1px solid #37648d;border-radius:18px;overflow:hidden;display:grid;place-items:center;isolation:isolate;box-shadow:0 12px 35px #0006}
-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:-1}
-.stage.camera video{display:block}
-.shade{position:absolute;inset:0;background:linear-gradient(180deg,#06101f33,#06101f88);pointer-events:none;z-index:0}
-.scan{position:absolute;width:58%;aspect-ratio:2/3;border:2px solid #7ceaffaa;border-radius:12px;box-shadow:0 0 22px #36cfff66,inset 0 0 20px #36cfff22;display:grid;place-items:center;z-index:1;transition:.3s}
-.scan:before,.scan:after{content:"";position:absolute;width:25px;height:25px;border-color:#b5f5ff;border-style:solid}
-.scan:before{top:-2px;left:-2px;border-width:3px 0 0 3px}.scan:after{right:-2px;bottom:-2px;border-width:0 3px 3px 0}
-.scan-label{text-align:center;font-size:11px;color:#d9faff;padding:10px;text-shadow:0 1px 4px #000}
-.hint{position:absolute;bottom:13px;left:12px;right:12px;text-align:center;font-size:11px;color:#e0f5ff;text-shadow:0 1px 5px #000;z-index:3}
-.monster{display:none}
-.monster-holo{position:relative;z-index:2;width:82%;max-height:78%;aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;transform:translateY(45px) scale(.65);transition:opacity .5s,transform .65s;pointer-events:none;filter:drop-shadow(0 0 22px var(--glow))}
-.summoned .monster-holo{opacity:1;transform:translateY(-8px) scale(1);animation:float 3s ease-in-out infinite}
-.holo-rings{position:absolute;width:92%;aspect-ratio:1;border:2px solid color-mix(in srgb,var(--glow) 75%,white);border-radius:50%;box-shadow:0 0 20px var(--glow),inset 0 0 25px var(--glow);opacity:.65}
-.holo-rings:before,.holo-rings:after{content:"";position:absolute;inset:9%;border:1px dashed var(--glow);border-radius:50%;transform:rotateX(65deg) rotate(25deg)}
-.holo-rings:after{inset:18%;transform:rotateX(65deg) rotate(-35deg)}
-.holo-symbol{position:relative;font-size:clamp(90px,22vw,175px);line-height:1.1;text-shadow:0 0 20px var(--glow),0 0 45px var(--glow);filter:drop-shadow(0 0 15px var(--glow))}
-.holo-name{position:relative;text-align:center;font-size:clamp(10px,2.5vw,15px);font-weight:900;letter-spacing:1.5px;color:#eaffff;text-shadow:0 0 12px var(--glow);padding:7px 10px;background:#06132699;border:1px solid color-mix(in srgb,var(--glow) 70%,white);border-radius:8px;max-width:95%}
-.holo-type{position:relative;font-size:10px;letter-spacing:1px;color:#c8edff;text-shadow:0 1px 5px #000}
-.summoned .scan{opacity:.15;transform:scale(1.12)}
-@keyframes float{50%{translate:0 -10px}}
-.title{position:absolute;top:15px;left:0;right:0;text-align:center;z-index:3;font-weight:900;letter-spacing:2px;color:#e6fcff;text-shadow:0 0 14px #3acfff;opacity:0;transform:translateY(-8px);transition:.4s}
-.summoned .title{opacity:1;transform:translateY(0)}
-.flash{position:absolute;inset:0;z-index:4;pointer-events:none;background:#c9faff;opacity:0}
-.summoned .flash{animation:flash .65s ease-out}
-@keyframes flash{0%{opacity:.8}100%{opacity:0}}
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-button.action{border:1px solid #3975a5;background:linear-gradient(180deg,#173b61,#0b1e36);color:#e9faff;padding:12px 9px;border-radius:11px;font-weight:750;font-size:12px;cursor:pointer;transition:.15s}
-button.action:hover{border-color:#8beaff;filter:brightness(1.13)}
-button.action:active{transform:scale(.98)}
-button.primary{background:linear-gradient(135deg,#1684bd,#1748a1);border-color:#78dfff}
-button:disabled{opacity:.45;cursor:not-allowed}
-.info{padding:14px;border:1px solid #294d70;background:linear-gradient(135deg,#102944,#09182b);border-radius:13px}
-.info strong{color:#b9f2ff;font-size:15px}
-.stats{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:9px;font-size:11px;color:#b1c8dc}
-.stat{background:#06132699;border:1px solid #29445f;border-radius:7px;padding:6px 8px}
-.status{text-align:center;font-size:11px;color:#a9eaff;min-height:18px;margin:10px 0}
-.note{font-size:10px;line-height:1.55;color:#819bb5;margin:14px 3px}
-@media(min-width:720px){main{padding:20px}.collection{grid-template-columns:repeat(3,minmax(0,1fr))}.arena{grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);align-items:start}.stage{aspect-ratio:4/5;max-height:620px}.scan{width:42%}.monster-holo{width:68%}.controls{grid-template-columns:1fr 1fr}.info{margin-top:12px}}
-@media(min-width:950px){.collection{grid-template-columns:repeat(6,minmax(0,1fr))}.art{height:112px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+:root{--cyan:#56eaff;--gold:#ffd36b;--panel:rgba(4,12,28,.88);--line:rgba(86,234,255,.55)}
+*{box-sizing:border-box}body{margin:0;background:#050914;color:#eefaff;font-family:system-ui,Arial,sans-serif;overflow-x:hidden}
+header{padding:14px 16px;text-align:center;background:linear-gradient(100deg,#06152d,#102b51,#06152d);border-bottom:1px solid var(--line)}
+h1{font-size:clamp(20px,4vw,30px);margin:0;letter-spacing:2px;color:#bdf7ff;text-shadow:0 0 15px #28cfff}
+header p{margin:4px 0 0;color:#9db9d3;font-size:12px}
+main{max-width:1100px;margin:auto;padding:12px;display:grid;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 0 20px #062a4a66}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+button,select{background:linear-gradient(135deg,#12365d,#081a32);color:#eaffff;border:1px solid #4acde8;border-radius:9px;padding:10px 13px;font-weight:700}
+button:active{transform:scale(.97)}button.primary{background:linear-gradient(135deg,#087f9c,#123d75);border-color:#8af3ff}
+button:disabled{opacity:.45}
+#stage{position:relative;min-height:430px;height:min(68vh,650px);overflow:hidden;border-radius:16px;background:radial-gradient(ellipse at center,#173a5b,#071321 65%,#02050b);border:1px solid #55dfff}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;opacity:.55}
+#three{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.stageLabel{position:absolute;z-index:2;top:10px;left:10px;background:#04101dcc;padding:7px 10px;border:1px solid #4acde877;border-radius:8px;font-size:12px}
+#field{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;z-index:3}
+.side{padding:8px;border:1px solid #4acde877;border-radius:12px;background:#07182bbd;backdrop-filter:blur(5px)}
+.side h3{margin:0 0 6px;text-align:center;font-size:13px;color:var(--gold)}
+.lp{display:flex;align-items:center;justify-content:center;gap:8px;font-size:clamp(17px,4vw,24px);font-weight:900;color:#fff}
+.lp button{padding:3px 9px;font-size:17px}
+.zones{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px}
+.zone{min-height:52px;border:1px dashed #70d9ef88;border-radius:6px;background:#17456a66;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;color:#c8efff;padding:3px;position:relative}
+.zone.monster{background:#155c7777}.zone.spell{background:#294d7077}.zone .mini{font-size:19px;display:block}
+.zone.occupied{border-style:solid;border-color:var(--gold);box-shadow:inset 0 0 10px #ffca5555}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.statline{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px}
+.deck{display:flex;align-items:center;gap:10px}
+.deckbox{width:42px;height:58px;border:2px solid #d4b66c;border-radius:5px;background:repeating-linear-gradient(45deg,#102d61,#102d61 5px,#1b4d83 5px,#1b4d83 10px);display:grid;place-items:center;color:#fff;font-size:20px}
+#hand{display:flex;gap:7px;overflow-x:auto;padding:8px 2px;min-height:100px}
+.card{min-width:68px;height:92px;border:1px solid #e9c66c;border-radius:7px;background:linear-gradient(145deg,#633d20,#d4a85c 48%,#412516);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:5px;font-size:10px;text-align:center}
+.card b{font-size:22px}.card small{font-size:8px}
+.note{font-size:11px;color:#9db9d3;text-align:center;line-height:1.5}
+@media(max-width:560px){#stage{min-height:480px;height:64vh}.side{padding:6px}.zone{min-height:46px;font-size:8px}.lower{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><div class="logo">YU-GI-OH! AR SUMMON</div><p>DUEL ARENA · PROTOTIPO 1.0</p></header>
+<header><h1>YU-GI-OH! · AR DUEL ARENA</h1><p>Campo de duelo interactivo · Prototipo 3D</p></header>
 <main>
-  <div class="section-title">01 / GALERÍA DE MONSTRUOS</div>
-  <div class="toolbar"><input id="search" type="search" placeholder="Buscar monstruo..." aria-label="Buscar monstruo"></div>
-  <div class="collection" id="collection"></div>
-  <div class="section-title">02 / CAMPO DE INVOCACIÓN</div>
-  <div class="arena">
-    <div>
-      <div class="stage" id="stage" style="--glow:#54dfff">
-        <video id="video" autoplay playsinline muted></video><div class="shade"></div>
-        <div class="title" id="summonTitle">¡INVOCACIÓN ESPECIAL!</div>
-        <div class="scan"><span class="scan-label">CENTRÁ TU CARTA<br>EN ESTE MARCO</span></div>
-        <div class="monster-holo" id="monsterHolo" aria-live="polite">
-          <div class="holo-rings"></div>
-          <div class="holo-symbol" id="holoSymbol">🐉</div>
-          <div class="holo-name" id="holoName">DRAGÓN BLANCO DE OJOS AZULES</div>
-          <div class="holo-type" id="holoType">DRAGÓN · LUZ · NIVEL 8</div>
-        </div>
-        <svg class="monster" id="monsterArt" viewBox="0 0 420 500" role="img" aria-label="Ilustración vectorial de dragón" style="display:none">
-          <defs>
-            <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f2ffff"/><stop offset=".32" stop-color="#80eaff"/><stop offset=".68" stop-color="#287dd8"/><stop offset="1" stop-color="#102b72"/></linearGradient>
-            <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d7ffff" stop-opacity=".9"/><stop offset=".5" stop-color="#40bfff" stop-opacity=".62"/><stop offset="1" stop-color="#163b9c" stop-opacity=".25"/></linearGradient>
-          </defs>
-          <path d="M202 220Q125 85 22 75Q63 145 45 225Q102 183 155 285L202 320Z" fill="url(#wing)" stroke="#bdf8ff" stroke-width="4"/>
-          <path d="M218 220Q295 85 398 75Q357 145 375 225Q318 183 265 285L218 320Z" fill="url(#wing)" stroke="#bdf8ff" stroke-width="4"/>
-          <path d="M194 229L69 104M184 260L53 204M226 229L351 104M236 260L367 204" stroke="#d5ffff" stroke-width="3"/>
-          <path d="M220 320Q310 370 285 438Q265 470 230 444Q273 420 235 390" fill="none" stroke="url(#body)" stroke-width="25" stroke-linecap="round"/>
-          <path d="M178 222Q130 267 158 327Q183 369 236 344Q275 316 242 263Q223 235 178 222Z" fill="url(#body)" stroke="#d8ffff" stroke-width="4"/>
-          <path d="M194 250Q215 193 260 169Q290 152 312 174Q292 189 280 208Q258 238 232 274Z" fill="url(#body)" stroke="#e0ffff" stroke-width="4"/>
-          <path d="M269 174Q292 132 321 126L306 166L347 155L324 187Q294 205 269 194Z" fill="url(#body)" stroke="#d8ffff" stroke-width="4"/>
-          <path d="M290 143L279 98L312 128M319 139L350 111L337 153" fill="none" stroke="#d8ffff" stroke-width="8" stroke-linecap="round"/>
-          <path d="M330 171L374 183L341 194L315 188Z" fill="#e4ffff" stroke="#b7f7ff" stroke-width="3"/><circle cx="315" cy="157" r="6" fill="#ffe88c"/>
-          <path d="M183 338L159 385L192 368L208 410L225 356" fill="url(#body)" stroke="#d8ffff" stroke-width="3"/>
-        </svg>
-        <div class="flash"></div>
-        <div class="hint" id="hint">Elegí un monstruo y presioná Invocar.</div>
-      </div>
-      <div class="controls" style="margin-top:10px">
-        <button class="action primary" id="camera">📷 Activar cámara</button>
-        <button class="action primary" id="summon">✨ Invocar monstruo</button>
-        <button class="action" id="reset">↻ Reiniciar campo</button>
-        <button class="action" id="fullscreen">⛶ Pantalla completa</button>
-      </div>
-      <div class="status" id="status" role="status" aria-live="polite">Campo listo. Seleccioná un monstruo.</div>
-    </div>
-    <div>
-      <div class="info">
-        <strong id="name">Dragón Blanco de Ojos Azules</strong>
-        <div class="stats"><span class="stat" id="kind">Dragón · LUZ · Nivel 8</span><b class="stat" id="atk">ATK 3000</b><b class="stat" id="def">DEF 2500</b></div>
-      </div>
-      <p class="note">Seleccioná una carta para ver sus datos y luego invocala en el campo. La cámara funciona como fondo y el monstruo seleccionado aparece superpuesto como holograma en el centro de la imagen. Esta versión todavía no identifica cartas físicas automáticamente ni utiliza modelos 3D con seguimiento espacial; la invocación es una demostración visual.</p>
-    </div>
-  </div>
+<div class="panel toolbar">
+<button class="primary" id="camBtn">Activar cámara</button>
+<button id="summonBtn">Invocar Dragón Blanco</button>
+<button id="attackBtn">Ataque</button>
+<button id="drawBtn">Robar carta</button>
+<button id="resetBtn">Reiniciar duelo</button>
+</div>
+<section id="stage">
+<video id="camera" autoplay playsinline muted></video><canvas id="three"></canvas>
+<div class="stageLabel" id="status">Campo de duelo listo · Activa la cámara</div>
+<div id="field">
+ <div class="side"><h3>OPONENTE</h3><div class="lp"><button onclick="changeLP('opp',-500)">−</button><span id="oppLP">8000</span><button onclick="changeLP('opp',500)">+</button></div>
+  <div class="zones"><div class="zone">Deck</div><div class="zone">Extra</div><div class="zone">Cementerio</div><div class="zone">Desterradas</div><div class="zone">Campo</div></div>
+  <div class="zones"><div class="zone monster" id="oM1">Monstruo</div><div class="zone monster" id="oM2">Monstruo</div><div class="zone monster" id="oM3">Monstruo</div><div class="zone monster" id="oM4">Monstruo</div><div class="zone monster" id="oM5">Monstruo</div></div>
+  <div class="zones"><div class="zone spell">M/P</div><div class="zone spell">M/P</div><div class="zone spell">M/P</div><div class="zone spell">M/P</div><div class="zone spell">M/P</div></div>
+ </div>
+ <div class="side"><h3>TU CAMPO</h3><div class="lp"><button onclick="changeLP('you',-500)">−</button><span id="youLP">8000</span><button onclick="changeLP('you',500)">+</button></div>
+  <div class="zones"><div class="zone">Deck <b id="deckCount">40</b></div><div class="zone">Extra</div><div class="zone" id="grave">Cementerio</div><div class="zone">Desterradas</div><div class="zone">Campo</div></div>
+  <div class="zones"><div class="zone monster" id="yM1">Monstruo</div><div class="zone monster" id="yM2">Monstruo</div><div class="zone monster" id="yM3">Monstruo</div><div class="zone monster" id="yM4">Monstruo</div><div class="zone monster" id="yM5">Monstruo</div></div>
+  <div class="zones"><div class="zone spell">M/P</div><div class="zone spell">M/P</div><div class="zone spell">M/P</div><div class="zone spell">M/P</div><div class="zone spell">M/P</div></div>
+ </div>
+</div>
+</section>
+<div class="lower">
+ <div class="panel"><div class="statline"><b>Tu Deck</b><span>Cartas restantes: <b id="deckCount2">40</b></span></div><div class="deck"><div class="deckbox">遊</div><span class="note">Pulsa “Robar carta” para añadir una carta a tu mano.</span></div></div>
+ <div class="panel"><b>Mano</b><div id="hand"><span class="note">Tus cartas robadas aparecerán aquí.</span></div></div>
+</div>
+<div class="panel note">Controles de prueba: ajusta los puntos de vida, roba cartas, invoca el Dragón Blanco y pulsa Ataque. La cámara funciona como fondo; el modelo 3D es una representación geométrica de demostración, todavía sin seguimiento espacial ni reconocimiento de cartas físicas.</div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-const cards=[
-{name:'Dragón Blanco de Ojos Azules',kind:'Dragón · LUZ · Nivel 8',atk:'3000',def:'2500',glow:'#54dfff',symbol:'🐉'},
-{name:'Mago Oscuro',kind:'Lanzador de Conjuros · OSCURIDAD · Nivel 7',atk:'2500',def:'2100',glow:'#a77bff',symbol:'🪄'},
-{name:'Dragón Negro de Ojos Rojos',kind:'Dragón · OSCURIDAD · Nivel 7',atk:'2400',def:'2000',glow:'#ff654f',symbol:'🐲'},
-{name:'Chica Maga Oscura',kind:'Lanzador de Conjuros · OSCURIDAD · Nivel 6',atk:'2000',def:'1700',glow:'#e68bff',symbol:'✨'},
-{name:'Kuriboh',kind:'Demonio · OSCURIDAD · Nivel 1',atk:'300',def:'200',glow:'#d6b58b',symbol:'☁️'},
-{name:'Dragón de Polvo de Estrellas',kind:'Dragón · VIENTO · Nivel 8',atk:'2500',def:'2000',glow:'#b5eaff',symbol:'🌟'},
-{name:'Obelisco el Atormentador',kind:'Divino-Bestia · DIVINIDAD · Nivel 10',atk:'4000',def:'4000',glow:'#72a9ff',symbol:'⚡'},
-{name:'Slifer el Dragón del Cielo',kind:'Divino-Bestia · DIVINIDAD · Nivel 10',atk:'X000',def:'X000',glow:'#ff6c69',symbol:'🐉'},
-{name:'El Dragón Alado de Ra',kind:'Divino-Bestia · DIVINIDAD · Nivel 10',atk:'? ',def:'?',glow:'#ffd36b',symbol:'☀️'},
-{name:'Exodia, el Prohibido',kind:'Mago · OSCURIDAD · Nivel 3',atk:'1000',def:'1000',glow:'#e8c77b',symbol:'👑'},
-{name:'HÉROE Elemental Neos',kind:'Guerrero · LUZ · Nivel 7',atk:'2500',def:'2000',glow:'#a6f2d0',symbol:'🛡️'},
-{name:'Ciber Dragón',kind:'Máquina · LUZ · Nivel 5',atk:'2100',def:'1600',glow:'#a7c8ff',symbol:'🤖'}
-];
-let selected=0,stream=null;
-const $=id=>document.getElementById(id);
-function render(){
- const query=$('search').value.trim().toLocaleLowerCase('es');
- const filtered=cards.map((c,i)=>({...c,index:i})).filter(c=>c.name.toLocaleLowerCase('es').includes(query));
- $('collection').innerHTML=filtered.length?filtered.map(c=>`<button class="card ${c.index===selected?'selected':''}" data-i="${c.index}" style="--glow:${c.glow}" aria-pressed="${c.index===selected}"><span class="level">✦ ${c.kind.match(/Nivel (\d+)/)?.[1]||'?'}</span><div class="art"><span>${c.symbol}</span></div><b>${c.name}</b><small>ATK ${c.atk} · DEF ${c.def}</small></button>`).join(''):'<p class="note">No se encontraron monstruos.</p>';
- document.querySelectorAll('.card').forEach(el=>el.addEventListener('click',()=>selectCard(Number(el.dataset.i))));
-}
-function selectCard(i){
- selected=i;const c=cards[i];
- $('name').textContent=c.name;$('kind').textContent=c.kind;$('atk').textContent='ATK '+c.atk;$('def').textContent='DEF '+c.def;
- $('stage').style.setProperty('--glow',c.glow);
- $('holoSymbol').textContent=c.symbol;
- $('holoName').textContent=c.name.toLocaleUpperCase('es');
- $('holoType').textContent=c.kind.toLocaleUpperCase('es');
- $('stage').classList.remove('summoned');$('hint').textContent='Seleccionado: '+c.name+' · ATK '+c.atk;
- $('status').textContent='Monstruo seleccionado: '+c.name+'.';render();
-}
-async function stopCamera(){
- if(stream){stream.getTracks().forEach(track=>track.stop());stream=null}
- $('video').srcObject=null;$('stage').classList.remove('camera');$('camera').textContent='📷 Activar cámara';
-}
-$('search').addEventListener('input',render);
-$('camera').onclick=async()=>{
- if(stream){await stopCamera();$('status').textContent='Cámara apagada.';return}
- try{
-  if(!navigator.mediaDevices?.getUserMedia)throw new Error('Tu navegador no permite acceder a la cámara desde esta página.');
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-  $('video').srcObject=stream;await $('video').play();$('stage').classList.add('camera');
-  $('camera').textContent='⏹ Apagar cámara';$('status').textContent='Cámara activa. Elegí un monstruo y presioná Invocar para proyectarlo sobre la cámara.';
- }catch(e){stream=null;$('status').textContent='No se pudo activar la cámara. Permití el acceso y abrí la página mediante HTTPS o localhost.'}
-};
-$('summon').onclick=()=>{
- $('stage').classList.remove('summoned');void $('stage').offsetWidth;$('stage').classList.add('summoned');
- $('summonTitle').textContent='¡INVOCACIÓN ESPECIAL!';$('status').textContent='¡'+cards[selected].name+' entra al campo!';
- $('hint').textContent=cards[selected].name+' · ATK '+cards[selected].atk;
-};
-$('reset').onclick=()=>{
- $('stage').classList.remove('summoned');$('hint').textContent='Elegí un monstruo y presioná Invocar.';
- $('status').textContent='Campo reiniciado. Tu monstruo sigue seleccionado.';
-};
-$('fullscreen').onclick=async()=>{
- try{if(!document.fullscreenElement)await $('stage').requestFullscreen();else await document.exitFullscreen()}
- catch(e){$('status').textContent='Pantalla completa no disponible en este navegador.'}
-};
-window.addEventListener('pagehide',()=>{if(stream)stream.getTracks().forEach(t=>t.stop())});
-selectCard(0);
+const $=id=>document.getElementById(id);let you=8000,opp=8000,deck=40,hand=0,stream=null,summoned=false;
+function changeLP(w,n){if(w==='you'){you=Math.max(0,you+n);$('youLP').textContent=you.toLocaleString('es-CR')}else{opp=Math.max(0,opp+n);$('oppLP').textContent=opp.toLocaleString('es-CR')}}
+function updateDeck(){ $('deckCount').textContent=deck;$('deckCount2').textContent=deck}
+$('drawBtn').onclick=()=>{if(deck<=0)return;deck--;hand++;updateDeck();let c=document.createElement('div');c.className='card';c.innerHTML='<b>✦</b><strong>'+(['Dragón Blanco','Mago Oscuro','Kuriboh','Dragón Negro'][Math.floor(Math.random()*4)])+'</strong><small>CARTA ROBADA</small>';$('hand').appendChild(c);$('status').textContent='Robaste una carta.'};
+$('summonBtn').onclick=()=>{summoned=true;let z=$('yM3');z.classList.add('occupied');z.innerHTML='<span class="mini">🐉</span>Dragón Blanco';$('status').textContent='¡Dragón Blanco de Ojos Azules, te invoco!';if(dragon)dragon.visible=true};
+$('attackBtn').onclick=()=>{if(!summoned){$('status').textContent='Primero invoca un monstruo.';return}changeLP('opp',-3000);$('status').textContent='¡Ráfaga de destrucción! (daño de prueba: 3000 LP)'};
+$('resetBtn').onclick=()=>{you=opp=8000;deck=40;hand=0;summoned=false;$('youLP').textContent=$('oppLP').textContent='8000';$('hand').innerHTML='';document.querySelectorAll('#yM1,#yM2,#yM3,#yM4,#yM5').forEach(z=>{z.classList.remove('occupied');z.textContent='Monstruo'});if(dragon)dragon.visible=false;updateDeck();$('status').textContent='Duelo reiniciado.'};
+$('camBtn').onclick=async()=>{try{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$('camera').style.display='none';$('camBtn').textContent='Activar cámara';$('status').textContent='Cámara apagada';return}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});$('camera').srcObject=stream;$('camera').style.display='block';$('camBtn').textContent='Apagar cámara';$('status').textContent='Cámara activa · Campo superpuesto'}catch(e){$('status').textContent='No se pudo activar la cámara. Revisa los permisos de Chrome.'}};
+let scene,camera,renderer,dragon;
+function makeDragon(){let g=new THREE.Group();let blue=new THREE.MeshStandardMaterial({color:0x9cecff,metalness:.55,roughness:.28});let dark=new THREE.MeshStandardMaterial({color:0x2875b4,metalness:.5,roughness:.3});let gold=new THREE.MeshStandardMaterial({color:0xffd36b,metalness:.7,roughness:.25});
+function ball(x,y,z,sx,sy,sz,mat){let m=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);g.add(m);return m}
+ball(0,0,0,.48,.62,.85,blue);ball(0,.62,-.48,.3,.3,.3,blue);ball(0,.72,-.78,.18,.17,.34,blue);
+for(let s of [-1,1]){let wing=new THREE.Mesh(new THREE.ConeGeometry(.65,1.25,4),dark);wing.position.set(s*.63,.25,.05);wing.rotation.z=s*-1.0;wing.rotation.x=-.35;g.add(wing);let horn=new THREE.Mesh(new THREE.ConeGeometry(.09,.55,8),gold);horn.position.set(s*.18,.98,-.55);horn.rotation.z=s*-.35;g.add(horn);let leg=ball(s*.28,-.52,-.05,.16,.38,.18,dark);leg.rotation.z=s*.2}
+let tail=new THREE.Mesh(new THREE.ConeGeometry(.18,1.1,8),blue);tail.position.set(0,-.05,.95);tail.rotation.x=Math.PI/2;g.add(tail);
+let eyeMat=new THREE.MeshStandardMaterial({color:0x00eaff,emissive:0x00aaff,emissiveIntensity:2});for(let s of [-1,1])ball(s*.13,.72,-.91,.045,.045,.025,eyeMat);
+return g}
+function init3D(){let canvas=$('three');scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,canvas.clientWidth/canvas.clientHeight,.1,100);camera.position.set(0,1.2,5.8);camera.lookAt(0,0,0);renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);scene.add(new THREE.HemisphereLight(0xbdeeff,0x12233b,2));let light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(3,5,4);scene.add(light);dragon=makeDragon();dragon.position.set(0,-.15,0);dragon.scale.setScalar(.95);dragon.visible=false;scene.add(dragon);function animate(){requestAnimationFrame(animate);if(dragon&&dragon.visible){dragon.rotation.y+=.004;dragon.position.y=-.15+Math.sin(Date.now()*.0015)*.07}renderer.render(scene,camera)}animate();new ResizeObserver(()=>{let w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(canvas)}
+if(window.THREE)init3D();else $('status').textContent='Conéctate a internet para cargar el motor 3D.';
 </script>
-</body>
-</html>
+</body></html>
