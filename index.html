@@ -1,4 +1,4 @@
-doctype html>
+<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -44,7 +44,7 @@ button:disabled{opacity:.45}
 <main>
 <div class="panel toolbar">
 <button class="primary" id="camBtn">Activar cámara</button>
-<button id="summonBtn">Invocar Dragón Blanco</button>
+<select id="monsterSelect" aria-label="Monstruo"><option value="blue">Dragón Blanco de Ojos Azules</option><option value="dark">Mago Oscuro</option><option value="red">Dragón Negro de Ojos Rojos</option><option value="slifer">Slifer el Dragón del Cielo</option><option value="obelisk">Obelisco el Atormentador</option><option value="ra">Dragón Alado de Ra</option><option value="exodia">Exodia</option></select><select id="zoneSelect" aria-label="Zona"><option value="1">Zona 1</option><option value="2">Zona 2</option><option value="3" selected>Zona 3</option><option value="4">Zona 4</option><option value="5">Zona 5</option></select><button class="primary" id="summonBtn">Invocar monstruo</button>
 <button id="attackBtn">Ataque</button>
 <button id="drawBtn">Robar carta</button>
 <button id="resetBtn">Reiniciar duelo</button>
@@ -66,30 +66,25 @@ button:disabled{opacity:.45}
 </div>
 </section>
 <div class="lower">
- <div class="panel"><div class="statline"><b>Tu Deck</b><span>Cartas restantes: <b id="deckCount2">40</b></span></div><div class="deck"><div class="deckbox">遊</div><span class="note">Pulsa “Robar carta” para añadir una carta a tu mano.</span></div></div>
+ <div class="panel"><div class="statline"><b>Tu Deck</b><span>Cartas restantes: <b id="deckCount2">40</b></span></div><div class="deck"><div class="deckbox">遊</div><span class="note">Elige monstruo y zona para invocarlo. Cada zona admite un monstruo.</span></div></div>
  <div class="panel"><b>Mano</b><div id="hand"><span class="note">Tus cartas robadas aparecerán aquí.</span></div></div>
 </div>
-<div class="panel note">Controles de prueba: ajusta los puntos de vida, roba cartas, invoca el Dragón Blanco y pulsa Ataque. La cámara funciona como fondo; el modelo 3D es una representación geométrica de demostración, todavía sin seguimiento espacial ni reconocimiento de cartas físicas.</div>
+<div class="panel note">Controles de prueba: ajusta los puntos de vida, roba cartas, elige entre siete monstruos y una de tus cinco zonas para invocar; pulsa Ataque. La cámara funciona como fondo; el modelo 3D es una representación geométrica de demostración, todavía sin seguimiento espacial ni reconocimiento de cartas físicas.</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-const $=id=>document.getElementById(id);let you=8000,opp=8000,deck=40,hand=0,stream=null,summoned=false;
+const $=id=>document.getElementById(id);let you=8000,opp=8000,deck=40,hand=0,stream=null,summoned=false,activeMonsters=[];
 function changeLP(w,n){if(w==='you'){you=Math.max(0,you+n);$('youLP').textContent=you.toLocaleString('es-CR')}else{opp=Math.max(0,opp+n);$('oppLP').textContent=opp.toLocaleString('es-CR')}}
 function updateDeck(){ $('deckCount').textContent=deck;$('deckCount2').textContent=deck}
 $('drawBtn').onclick=()=>{if(deck<=0)return;deck--;hand++;updateDeck();let c=document.createElement('div');c.className='card';c.innerHTML='<b>✦</b><strong>'+(['Dragón Blanco','Mago Oscuro','Kuriboh','Dragón Negro'][Math.floor(Math.random()*4)])+'</strong><small>CARTA ROBADA</small>';$('hand').appendChild(c);$('status').textContent='Robaste una carta.'};
-$('summonBtn').onclick=()=>{summoned=true;let z=$('yM3');z.classList.add('occupied');z.innerHTML='<span class="mini">🐉</span>Dragón Blanco';$('status').textContent='¡Dragón Blanco de Ojos Azules, te invoco!';if(dragon)dragon.visible=true};
+$('summonBtn').onclick=()=>{let type=$('monsterSelect').value,zone=Number($('zoneSelect').value),z=$('yM'+zone);if(z.classList.contains('occupied')){$('status').textContent='Esa zona ya está ocupada. Elige otra.';return}let names={blue:'Dragón Blanco de Ojos Azules',dark:'Mago Oscuro',red:'Dragón Negro de Ojos Rojos',slifer:'Slifer el Dragón del Cielo',obelisk:'Obelisco el Atormentador',ra:'Dragón Alado de Ra',exodia:'Exodia'};z.classList.add('occupied');z.innerHTML='<span class="mini">✦</span>'+names[type];summoned=true;spawnMonster(type,zone);$('status').textContent='¡'+names[type]+' invocado en la zona '+zone+'!'};
 $('attackBtn').onclick=()=>{if(!summoned){$('status').textContent='Primero invoca un monstruo.';return}changeLP('opp',-3000);$('status').textContent='¡Ráfaga de destrucción! (daño de prueba: 3000 LP)'};
-$('resetBtn').onclick=()=>{you=opp=8000;deck=40;hand=0;summoned=false;$('youLP').textContent=$('oppLP').textContent='8000';$('hand').innerHTML='';document.querySelectorAll('#yM1,#yM2,#yM3,#yM4,#yM5').forEach(z=>{z.classList.remove('occupied');z.textContent='Monstruo'});if(dragon)dragon.visible=false;updateDeck();$('status').textContent='Duelo reiniciado.'};
+$('resetBtn').onclick=()=>{you=opp=8000;deck=40;hand=0;summoned=false;activeMonsters.forEach(m=>scene&&scene.remove(m));activeMonsters=[];$('youLP').textContent=$('oppLP').textContent='8000';$('hand').innerHTML='';document.querySelectorAll('#yM1,#yM2,#yM3,#yM4,#yM5').forEach(z=>{z.classList.remove('occupied');z.textContent='Monstruo'});activeMonsters.forEach(m=>scene&&scene.remove(m));activeMonsters=[];updateDeck();$('status').textContent='Duelo reiniciado.'};
 $('camBtn').onclick=async()=>{try{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$('camera').style.display='none';$('camBtn').textContent='Activar cámara';$('status').textContent='Cámara apagada';return}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});$('camera').srcObject=stream;$('camera').style.display='block';$('camBtn').textContent='Apagar cámara';$('status').textContent='Cámara activa · Campo superpuesto'}catch(e){$('status').textContent='No se pudo activar la cámara. Revisa los permisos de Chrome.'}};
 let scene,camera,renderer,dragon;
-function makeDragon(){let g=new THREE.Group();let blue=new THREE.MeshStandardMaterial({color:0x9cecff,metalness:.55,roughness:.28});let dark=new THREE.MeshStandardMaterial({color:0x2875b4,metalness:.5,roughness:.3});let gold=new THREE.MeshStandardMaterial({color:0xffd36b,metalness:.7,roughness:.25});
-function ball(x,y,z,sx,sy,sz,mat){let m=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);g.add(m);return m}
-ball(0,0,0,.48,.62,.85,blue);ball(0,.62,-.48,.3,.3,.3,blue);ball(0,.72,-.78,.18,.17,.34,blue);
-for(let s of [-1,1]){let wing=new THREE.Mesh(new THREE.ConeGeometry(.65,1.25,4),dark);wing.position.set(s*.63,.25,.05);wing.rotation.z=s*-1.0;wing.rotation.x=-.35;g.add(wing);let horn=new THREE.Mesh(new THREE.ConeGeometry(.09,.55,8),gold);horn.position.set(s*.18,.98,-.55);horn.rotation.z=s*-.35;g.add(horn);let leg=ball(s*.28,-.52,-.05,.16,.38,.18,dark);leg.rotation.z=s*.2}
-let tail=new THREE.Mesh(new THREE.ConeGeometry(.18,1.1,8),blue);tail.position.set(0,-.05,.95);tail.rotation.x=Math.PI/2;g.add(tail);
-let eyeMat=new THREE.MeshStandardMaterial({color:0x00eaff,emissive:0x00aaff,emissiveIntensity:2});for(let s of [-1,1])ball(s*.13,.72,-.91,.045,.045,.025,eyeMat);
-return g}
-function init3D(){let canvas=$('three');scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,canvas.clientWidth/canvas.clientHeight,.1,100);camera.position.set(0,1.2,5.8);camera.lookAt(0,0,0);renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);scene.add(new THREE.HemisphereLight(0xbdeeff,0x12233b,2));let light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(3,5,4);scene.add(light);dragon=makeDragon();dragon.position.set(0,-.15,0);dragon.scale.setScalar(.95);dragon.visible=false;scene.add(dragon);function animate(){requestAnimationFrame(animate);if(dragon&&dragon.visible){dragon.rotation.y+=.004;dragon.position.y=-.15+Math.sin(Date.now()*.0015)*.07}renderer.render(scene,camera)}animate();new ResizeObserver(()=>{let w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(canvas)}
+function makeMonster(type){let g=new THREE.Group();let palette={blue:[0x9cecff,0x2875b4],dark:[0x6d4acb,0x24134f],red:[0x9b1e1e,0x351018],slifer:[0xd52e32,0x74151d],obelisk:[0x65c9e8,0x174e79],ra:[0xf5c542,0xc46b12],exodia:[0xc7a45a,0x755326]}[type]||[0x9cecff,0x2875b4];let mat=new THREE.MeshStandardMaterial({color:palette[0],metalness:.45,roughness:.3});let dark=new THREE.MeshStandardMaterial({color:palette[1],metalness:.4,roughness:.35});function part(geo,x,y,z,sx,sy,sz,m){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o);return o}part(new THREE.SphereGeometry(1,20,14),0,0,0,.48,.65,.4,mat);part(new THREE.SphereGeometry(1,16,12),0,.67,-.08,.3,.3,.28,mat);for(let side of [-1,1]){part(new THREE.ConeGeometry(.12,.65,8),side*.22,1,-.05,.7,1,.7,dark);part(new THREE.CylinderGeometry(.08,.13,.55,8),side*.55,-.35,0,1,1,1,dark)}if(type==='blue'||type==='red'||type==='slifer'||type==='ra'){for(let side of [-1,1]){let wing=part(new THREE.ConeGeometry(.65,1.2,4),side*.62,.22,.12,1,1,1,dark);wing.rotation.z=side*-1.1}}if(type==='exodia'){for(let side of [-1,1])part(new THREE.BoxGeometry(.18,.8,.2),side*.55,-.05,0,1,1,1,dark)}return g}
+function spawnMonster(type,zone){if(!scene)return;let m=makeMonster(type);let x=(zone-3)*1.25;m.position.set(x,-.3,0);m.scale.setScalar(type==='slifer'||type==='ra'?1.05:.82);scene.add(m);activeMonsters.push(m)}
+function init3D(){let canvas=$('three');scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,canvas.clientWidth/canvas.clientHeight,.1,100);camera.position.set(0,1.2,5.8);camera.lookAt(0,0,0);renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);scene.add(new THREE.HemisphereLight(0xbdeeff,0x12233b,2));let light=new THREE.DirectionalLight(0xffffff,2.5);light.position.set(3,5,4);scene.add(light);function animate(){requestAnimationFrame(animate);activeMonsters.forEach(m=>{m.rotation.y+=.004;m.position.y=-.3+Math.sin(Date.now()*.0015)*.045})renderer.render(scene,camera)}animate();new ResizeObserver(()=>{let w=canvas.clientWidth,h=canvas.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(canvas)}
 if(window.THREE)init3D();else $('status').textContent='Conéctate a internet para cargar el motor 3D.';
 </script>
 </body></html>
