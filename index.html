@@ -18,7 +18,7 @@ button:disabled{opacity:.45}
 #stage{position:relative;min-height:430px;height:min(68vh,650px);overflow:hidden;border-radius:16px;background:radial-gradient(ellipse at center,#173a5b,#071321 65%,#02050b);border:1px solid #55dfff}
 #camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;opacity:.55}
 #three{position:absolute;inset:0;width:100%;height:100%;z-index:1}
-.stageLabel{position:absolute;z-index:2;top:10px;left:10px;background:#04101dcc;padding:7px 10px;border:1px solid #4acde877;border-radius:8px;font-size:12px}
+.stageLabel{position:absolute;z-index:50;top:10px;left:10px;right:10px;background:#04101df2;padding:12px 14px;border:2px solid #4acde8;border-radius:10px;font-size:14px;font-weight:800;line-height:1.4;box-shadow:0 4px 18px #000b;pointer-events:none}
 #field{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;z-index:3}
 .side{padding:8px;border:1px solid #4acde877;border-radius:12px;background:#07182bbd;backdrop-filter:blur(5px)}
 .side h3{margin:0 0 6px;text-align:center;font-size:13px;color:var(--gold)}
@@ -57,7 +57,7 @@ button:disabled{opacity:.45}
 </div>
 <div class="panel toolbar" id="oppControls"><b>Control del oponente:</b><select id="oppMonsterSelect"><option value="blue">Dragón Blanco de Ojos Azules</option><option value="dark">Mago Oscuro</option><option value="red">Dragón Negro de Ojos Rojos</option><option value="slifer">Slifer el Dragón del Cielo</option><option value="obelisk">Obelisco el Atormentador</option><option value="ra">Dragón Alado de Ra</option><option value="exodia">Exodia</option></select><select id="oppZoneSelect"><option value="1">Zona 1</option><option value="2">Zona 2</option><option value="3" selected>Zona 3</option><option value="4">Zona 4</option><option value="5">Zona 5</option></select><button id="oppSummonBtn">Invocar en campo rival</button><button id="aiMoveBtn">Acción de la IA</button></div>
 <section id="stage">
-<video id="camera" autoplay playsinline muted></video><canvas id="three"></canvas><div id="arHint" style="position:absolute;z-index:4;bottom:10px;left:10px;right:10px;text-align:center;background:#04101dcc;padding:8px;border-radius:8px;font-size:12px">Pulsa “Proyectar campo en el piso” para iniciar AR espacial compatible.</div>
+<video id="camera" autoplay playsinline muted></video><canvas id="three"></canvas><div id="arHint" style="position:absolute;z-index:60;bottom:10px;left:10px;right:10px;text-align:center;background:#04101df2;border:2px solid #56eaff;padding:12px;border-radius:10px;font-size:14px;font-weight:800;line-height:1.4;box-shadow:0 4px 18px #000b;pointer-events:none">Pulsa “Proyectar campo en el piso” para iniciar AR espacial compatible.</div>
 <div class="stageLabel" id="status">Campo de duelo listo · Activa la cámara</div>
 <div id="field">
  <div class="side"><h3>OPONENTE</h3><div class="lp"><button onclick="changeLP('opp',-500)">−</button><span id="oppLP">8000</span><button onclick="changeLP('opp',500)">+</button></div>
@@ -149,7 +149,7 @@ async function startAR(){
   await renderer.xr.setSession(arSession);
   viewerSpace=await arSession.requestReferenceSpace('viewer');hitTestSource=await arSession.requestHitTestSource({space:viewerSpace});
   localSpace=await arSession.requestReferenceSpace('local');
-  fieldPlaced=false;lastHitMatrix=null;fieldGroup.visible=false;$('field').style.display='none';$('stageLabel').style.display='none';$('arHint').textContent='Mueve el celular lentamente hacia el piso. Cuando aparezca el círculo verde, toca la pantalla para colocar el campo.';
+  fieldPlaced=false;lastHitMatrix=null;fieldGroup.visible=false;$('field').style.display='none';$('stageLabel').style.display='block';$('arHint').textContent='Mueve el celular lentamente hacia el piso. Cuando aparezca el círculo verde, toca la pantalla para colocar el campo.';
   $('arBtn').disabled=true;$('exitArBtn').disabled=false;$('camBtn').disabled=true;
   arSession.addEventListener('select',()=>{if(!fieldPlaced&&lastHitMatrix)placeFieldAt(lastHitMatrix);});
   arSession.addEventListener('end',()=>{hitTestSource?.cancel();hitTestSource=null;arSession=null;fieldPlaced=false;lastHitMatrix=null;fieldGroup.visible=false;$('field').style.display='grid';$('stageLabel').style.display='block';$('arBtn').disabled=false;$('exitArBtn').disabled=true;$('camBtn').disabled=false;$('arHint').textContent='Pulsa “Proyectar campo en el piso” para iniciar AR espacial compatible.';status('Sesión AR finalizada.');});
